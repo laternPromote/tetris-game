@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>彩色俄罗斯方块</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <div class="score-label">分数</div>
+                <div id="score">0</div>
+            </div>
+            <div class="level-container">
+                <div class="level-label">等级</div>
+                <div id="level">1</div>
+            </div>
+            <div class="lines-container">
+                <div class="lines-label">行数</div>
+                <div id="lines">0</div>
+            </div>
+        </div>
+        
+        <canvas id="tetris" width="300" height="600"></canvas>
+        
+        <div class="next-piece-container">
+            <div class="next-label">下一个</div>
+            <canvas id="nextPiece" width="100" height="100"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">开始游戏</button>
+            <button id="pauseBtn">暂停</button>
+            <div class="mobile-controls">
+                <button id="leftBtn">←</button>
+                <button id="rotateBtn">↻</button>
+                <button id="rightBtn">→</button>
+                <button id="downBtn">↓</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-over hidden" id="gameOverScreen">
+        <div class="game-over-content">
+            <h2>游戏结束</h2>
+            <p>你的分数: <span id="finalScore">0</span></p>
+            <button id="restartBtn">重新开始</button>
+        </div>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html>
