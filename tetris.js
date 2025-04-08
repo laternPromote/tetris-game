@@ -122,6 +122,12 @@ function initBoard() {
 
 // 开始游戏
 function startGame() {
+    // 如果游戏已暂停，则继续游戏而不是重新开始
+    if (paused && !gameOver) {
+        togglePause();
+        return;
+    }
+    
     // 重置游戏状态
     gameOver = false;
     gameOverScreen.classList.add('hidden');
@@ -145,6 +151,7 @@ function startGame() {
     // 开始游戏循环
     dropStart = Date.now();
     paused = false;
+    pauseBtn.textContent = '暂停'; // 确保按钮文本正确
     update();
 }
 
