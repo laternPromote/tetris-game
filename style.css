@@ -105,25 +105,48 @@ button:active {
 }
 
 .mobile-controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 10px;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 180px;
+    height: 180px;
+    margin-top: 0;
+    gap: 5px;
 }
 
 #leftBtn, #rightBtn, #rotateBtn, #downBtn {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 5px;
+    margin: 0;
+    border-radius: 50%;
+    background-color: rgba(74, 74, 74, 0.85);
 }
 
 #rotateBtn {
-    width: 60px;
+    grid-column: 2;
+    grid-row: 1;
+}
+
+#leftBtn {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+#rightBtn {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+#downBtn {
+    grid-column: 2;
+    grid-row: 3;
 }
 
 .game-over {
@@ -161,15 +184,28 @@ button:active {
     display: none;
 }
 
-/* 移动设备适配 */
+/* 移动设备适配 - 针对iPhone 13 Pro Max优化 */
 @media (max-width: 480px) {
+    body {
+        overflow: hidden; /* 防止页面滚动 */
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background-color: #121212;
+    }
+    
     .game-container {
-        width: 95%;
+        width: 100%;
+        height: 100vh;
         padding: 5px;
-        border-radius: 6px;
+        border-radius: 0;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start; /* 左对齐 */
+        position: relative;
+        overflow: hidden;
+        background-color: transparent;
+        box-shadow: none;
     }
     
     .game-header {
@@ -178,15 +214,25 @@ button:active {
     }
     
     canvas#tetris {
-        width: 65%;
+        width: 75%; /* 增加游戏区域宽度至3/4 */
         height: auto;
         aspect-ratio: 1/2;
-        max-height: 70vh;
+        max-height: 85vh;
+        border: 1px solid #222222; /* 更小的边框 */
+        margin-top: 10px;
+        margin-left: 5px; /* 添加左边距 */
     }
     
     .next-piece-container {
-        width: 30%;
-        margin: 0 0 0 5px;
+        position: absolute;
+        top: 70px;
+        right: 5px;
+        width: 22%; /* 减小宽度以避免遮挡 */
+        margin: 0;
+        background-color: rgba(42, 42, 42, 0.8);
+        border-radius: 8px;
+        padding: 8px;
+        z-index: 10;
     }
     
     .controls {
@@ -195,23 +241,65 @@ button:active {
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
+        position: absolute;
+        bottom: 10px;
+        left: 0;
+        padding: 0 10px;
     }
     
-    #startBtn, #pauseBtn {
-        width: 48%;
+    #startBtn {
+        display: none; /* 隐藏开始按钮，因为点击游戏区域就可以开始游戏 */
+    }
+    
+    #pauseBtn {
+        width: 100%;
         margin: 3px 0;
+        padding: 8px 0;
+        font-size: 14px;
     }
     
     .mobile-controls {
-        width: 100%;
-        margin-top: 5px;
-        justify-content: space-between;
+        position: absolute;
+        right: 10px;
+        bottom: 120px;
+        width: 150px;
+        height: 150px;
+        margin-top: 0;
+        gap: 5px;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        transform: none; /* 移除可能继承的transform */
     }
     
     #leftBtn, #rightBtn, #rotateBtn, #downBtn {
-        width: 22%;
-        height: 45px;
-        font-size: 20px;
-        margin: 3px 0;
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+        margin: 0;
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* 按钮布局 - 游戏手柄十字键风格 */
+    #rotateBtn {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    
+    #leftBtn {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    #rightBtn {
+        grid-column: 3;
+        grid-row: 2;
+    }
+    
+    #downBtn {
+        grid-column: 2;
+        grid-row: 3;
     }
 }

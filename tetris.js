@@ -52,6 +52,10 @@ let touchStartY = 0;
 let touchEndX = 0;
 let touchEndY = 0;
 let touchThreshold = 30; // 触摸滑动阈值
+let touchStartTime = 0;
+let touchEndTime = 0;
+let isTapping = false; // 是否为轻触而非滑动
+let fastDropActive = false; // 是否激活快速下落
 
 // DOM元素
 const scoreElement = document.getElementById('score');
@@ -86,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('touchmove', handleTouchMove);
     canvas.addEventListener('touchend', handleTouchEnd);
     
+    // 添加点击游戏区域开始游戏的功能
+    canvas.addEventListener('click', () => {
+        if (gameOver || (!paused && requestId)) return;
+        startGame();
+    });
+    
     // 按钮事件
     startBtn.addEventListener('click', startGame);
     pauseBtn.addEventListener('click', togglePause);
@@ -105,11 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 绘制游戏说明
     ctx.fillStyle = '#fff';
-    ctx.font = '18px Arial';
+    ctx.font = '20px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('点击开始游戏', canvas.width / 2, canvas.height / 2 - 30);
     ctx.font = '14px Arial';
-    ctx.fillText('滑动控制:', canvas.width / 2, canvas.height / 2 + 10);
+    ctx.fillText('游戏控制:', canvas.width / 2, canvas.height / 2 + 10);
     ctx.fillText('← → 移动', canvas.width / 2, canvas.height / 2 + 30);
     ctx.fillText('↑ 旋转', canvas.width / 2, canvas.height / 2 + 50);
     ctx.fillText('↓ 加速下落', canvas.width / 2, canvas.height / 2 + 70);
@@ -135,7 +145,9 @@ function startGame() {
     score = 0;
     level = 1;
     lines = 0;
-    dropInterval = 1000;
+    dropInterval = 800; // 降低初始下落间隔，使游戏前期更流畅
+    fastDropActive = false;
+    isTapping = false;
     updateScore();
     
     // 生成方块
@@ -177,7 +189,15 @@ function update() {
     const now = Date.now();
     const delta = now - dropStart;
     
-    if (delta > dropInterval) {
+    // 计算当前应该使用的下落间隔
+    let currentInterval = fastDropActive ? Math.max(50, dropInterval / 3) : dropInterval;
+    
+    // 游戏前期提供更快的自然下落速度
+    if (level === 1 && score < 300) {
+        currentInterval = Math.min(currentInterval, 600); // 游戏前期加速
+    }
+    
+    if (delta > currentInterval) {
         movePiece(0, 1);
         dropStart = now;
     }
@@ -459,8 +479,8 @@ function updateScore(linesCleared = 0) {
         const newLevel = Math.floor(lines / 10) + 1;
         if (newLevel > level) {
             level = newLevel;
-            // 提高游戏速度
-            dropInterval = Math.max(100, 1000 - (level - 1) * 100);
+            // 提高游戏速度，但保持适当的难度曲线
+            dropInterval = Math.max(100, 800 - (level - 1) * 80);
         }
     }
     
@@ -520,11 +540,35 @@ function handleTouchStart(event) {
     
     touchStartX = event.touches[0].clientX;
     touchStartY = event.touches[0].clientY;
+    touchStartTime = Date.now();
+    isTapping = true; // 初始状态为轻触
     event.preventDefault(); // 防止滚动
 }
 
 function handleTouchMove(event) {
-    if (gameOver) return;
+    if (gameOver || paused) return;
+    
+    const currentX = event.touches[0].clientX;
+    const currentY = event.touches[0].clientY;
+    const diffX = currentX - touchStartX;
+    const diffY = currentY - touchStartY;
+    const absDiffX = Math.abs(diffX);
+    const absDiffY = Math.abs(diffY);
+    
+    // 如果移动超过阈值，则不再是轻触
+    if (absDiffX > touchThreshold || absDiffY > touchThreshold) {
+        isTapping = false;
+        
+        // 如果是明显的下滑动作，激活快速下落
+        if (absDiffY > touchThreshold * 1.5 && diffY > 0) {
+            if (!fastDropActive) {
+                fastDropActive = true;
+                // 临时加速下落速度
+                dropInterval = Math.max(50, dropInterval / 3);
+            }
+        }
+    }
+    
     event.preventDefault(); // 防止滚动
 }
 
@@ -533,34 +577,54 @@ function handleTouchEnd(event) {
     
     touchEndX = event.changedTouches[0].clientX;
     touchEndY = event.changedTouches[0].clientY;
+    touchEndTime = Date.now();
     
     const diffX = touchEndX - touchStartX;
     const diffY = touchEndY - touchStartY;
     const absDiffX = Math.abs(diffX);
     const absDiffY = Math.abs(diffY);
+    const touchDuration = touchEndTime - touchStartTime;
     
-    // 判断滑动方向
-    if (Math.max(absDiffX, absDiffY) > touchThreshold) {
-        if (absDiffX > absDiffY) {
-            // 水平滑动
+    // 重置快速下落状态
+    if (fastDropActive) {
+        fastDropActive = false;
+        // 恢复正常下落速度
+        dropInterval = Math.max(100, 1000 - (level - 1) * 100);
+    }
+    
+    // 判断操作类型
+    if (isTapping && touchDuration < 300 && Math.max(absDiffX, absDiffY) < touchThreshold) {
+        // 纯轻触（短时间内几乎没有移动）- 旋转方块
+        rotatePiece();
+    } else if (Math.max(absDiffX, absDiffY) > touchThreshold) {
+        // 明显的滑动手势
+        if (absDiffX > absDiffY * 1.5) {
+            // 明显的水平滑动（水平移动比垂直移动大1.5倍）
             if (diffX > 0) {
                 movePiece(1, 0); // 右移
             } else {
                 movePiece(-1, 0); // 左移
             }
-        } else {
-            // 垂直滑动
+        } else if (absDiffY > absDiffX * 1.5) {
+            // 明显的垂直滑动（垂直移动比水平移动大1.5倍）
             if (diffY > 0) {
-                movePiece(0, 1); // 下移
+                // 下滑 - 如果滑动距离较大，执行硬降（直接落到底部）
+                if (absDiffY > touchThreshold * 3) {
+                    hardDrop();
+                } else {
+                    // 普通下移
+                    movePiece(0, 1);
+                }
             } else {
-                rotatePiece(); // 上滑旋转
+                // 上滑 - 旋转
+                rotatePiece();
             }
         }
-    } else {
-        // 轻触（视为旋转）
-        rotatePiece();
+        // 如果不是明显的水平或垂直滑动（对角线滑动），则不执行任何操作，避免误触
     }
     
+    // 重置轻触状态
+    isTapping = false;
     event.preventDefault();
 }
 
